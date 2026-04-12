@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cs-agent",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["cs-agent/agent.py", "--serve", "8000"],
+      "port": 8000
+    }
+  ]
+}

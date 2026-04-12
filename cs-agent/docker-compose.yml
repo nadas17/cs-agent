@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  agent:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./wiki:/app/wiki:ro
+      - ./mastersheet:/app/mastersheet:ro
+      - ./outputs:/app/outputs
+      - ./traces:/app/traces
+      - ./benchmarks:/app/benchmarks
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
+    restart: unless-stopped

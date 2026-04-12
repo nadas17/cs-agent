@@ -1,0 +1,37 @@
+version: "3.8"
+# S2: Production compose — Caddy reverse proxy ile HTTPS
+# Kullanim: docker-compose -f docker-compose.prod.yml up -d
+# Domain: CS_AGENT_DOMAIN env variable ile ayarlanir
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - agent
+    restart: unless-stopped
+
+  agent:
+    build: .
+    # S2: Disariya port acma — sadece caddy uzerinden erisim
+    expose:
+      - "8000"
+    volumes:
+      - ./wiki:/app/wiki:ro
+      - ./mastersheet:/app/mastersheet:ro
+      - ./outputs:/app/outputs
+      - ./traces:/app/traces
+      - ./benchmarks:/app/benchmarks
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

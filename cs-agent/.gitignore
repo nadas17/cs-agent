@@ -1,0 +1,34 @@
+# Environment
+.env
+
+# Traces and sessions (contain PII)
+traces/*.jsonl
+traces/client_state.json
+traces/sessions/*.json
+
+# Generated documents
+outputs/*
+!outputs/.gitkeep
+
+# Benchmark results (keep qa_pairs.json)
+benchmarks/results_*.json
+benchmarks/baseline.json
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

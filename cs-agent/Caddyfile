@@ -1,0 +1,21 @@
+# S2: Caddy reverse proxy — otomatik HTTPS (Let's Encrypt)
+# Domain'i .env'de CS_AGENT_DOMAIN olarak ayarlayin
+# Dev ortaminda: localhost yerine :80 kullanin
+
+{$CS_AGENT_DOMAIN:localhost} {
+    reverse_proxy agent:8000
+
+    # Guvenlik header'lari
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # Loglama
+    log {
+        output file /data/access.log
+        format json
+    }
+}
