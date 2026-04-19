@@ -217,13 +217,13 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "wiki_read",
-            "description": "Reads a wiki article's content. Choose the article path from the list in INDEX.md.",
+            "description": "Returns raw wiki article content. Choose the article path from INDEX.md. Articles under draft/ are unverified — cite as [SOURCE: draft/... (unverified)] and flag to the user. Articles may be long (2-5k words); call ONCE per article and extract what you need, do not re-read.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "article_path": {
                         "type": "string",
-                        "description": "Article path, e.g.: onboarding/checklist.md"
+                        "description": "Article path, e.g.: onboarding/checklist.md (or draft/<name>.md for unverified sources)"
                     }
                 },
                 "required": ["article_path"]
@@ -234,13 +234,18 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "mastersheet_read",
-            "description": "Queries client information from the mastersheet. Searches by company name, NIP, firm type (JDG, SP), or accountant name. Special commands: 'rastgele' (10 random firms), 'tumu' (full firm list), 'say' (total firm count).",
+            "description": "AUTHORITATIVE source for any Polish client company data (NIP, KRS, address, VAT status, assigned accountant role, tax office, bank accounts). ALWAYS call this tool when the user asks about ANY company name, NIP, or firm identifier — even if you think you know the answer. Do NOT rely on memory; the mastersheet is the single source of truth. Substring match across company name, NIP, firm type, accountant role. Special commands: 'rastgele' (10 random firms), 'tumu' (all firm names), 'say' (count).",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Search term: company name, NIP number, firm type (JDG, SP, SC), accountant name, or any keyword"
+                        "description": "Search term: company name, NIP (10 digits), firm type (S.A., sp z o o, JDG), accountant role (Head Accountant, Accountant, Unassigned), or special command (rastgele/tumu/say)."
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max rows returned (default 20). Raise when user asks for broad survey.",
+                        "default": 20
                     }
                 },
                 "required": ["query"]
@@ -351,6 +356,23 @@ TOOLS = [
                 "required": ["krs_number"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "load_skill",
+            "description": "Loads a skill's full step-by-step instructions. Skills are listed in the [SKILLS] block of the system prompt with their names and one-line descriptions. Call this when a skill's description matches the user's task; the returned body contains the full procedure and wiki references to follow.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Skill name as shown in the [SKILLS] block (e.g. 'zus_declaration', 'new_client_onboarding', 'vat_declaration')."
+                    }
+                },
+                "required": ["name"]
+            }
+        }
     }
 ]
 
@@ -431,7 +453,7 @@ def _call_mcp_tool(server_name, tool_name, args):
         "arguments": args,
     })
     if "error" in result:
-        return f"Error: MCP tool call failed — {result['error']}"
+        return f"Error [UPSTREAM_ERROR]: MCP tool call failed — {result['error']}"
     content = result.get("result", {}).get("content", [])
     if content and isinstance(content, list):
         return "\n".join(c.get("text", str(c)) for c in content)
@@ -484,90 +506,125 @@ def format_client_row(row):
 
 
 # =============================================================================
+# SKILL LOADER — progressive disclosure: name+description at boot, body on demand
+# =============================================================================
+
+
+def _parse_frontmatter(content: str):
+    """Parse simple single-line YAML frontmatter. Returns (dict, body)."""
+    if not content.startswith("---"):
+        return {}, content
+    end = content.find("\n---", 4)
+    if end == -1:
+        return {}, content
+    fm_text = content[4:end]
+    body = content[end + 4:].lstrip("\n")
+    fm = {}
+    for line in fm_text.splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            fm[k.strip()] = v.strip()
+    return fm, body
+
+
+def list_skills():
+    """List all skills with name+description (for system prompt injection)."""
+    skills_dir = CONFIG.get("skills_dir", "")
+    out = []
+    if not skills_dir or not os.path.isdir(skills_dir):
+        return out
+    for entry in sorted(os.listdir(skills_dir)):
+        skill_md = os.path.join(skills_dir, entry, "SKILL.md")
+        if os.path.isfile(skill_md):
+            with open(skill_md, "r", encoding="utf-8") as f:
+                content = f.read()
+            fm, _ = _parse_frontmatter(content)
+            out.append({
+                "name": fm.get("name", entry),
+                "description": fm.get("description", ""),
+            })
+    return out
+
+
+def load_skill(name: str) -> str:
+    """Load a skill's body (markdown after frontmatter). Returns error string on miss."""
+    skills_dir = CONFIG.get("skills_dir", "")
+    # Path-traversal guard
+    candidate = os.path.realpath(os.path.join(skills_dir, name, "SKILL.md"))
+    if not candidate.startswith(os.path.realpath(skills_dir)):
+        return f"Error [PATH_BLOCKED]: '{name}' — access outside skills directory."
+    if not os.path.isfile(candidate):
+        return f"Error [SKILL_NOT_FOUND]: skill '{name}' not found. Call list_skills or see [SKILLS] block in system prompt."
+    with open(candidate, "r", encoding="utf-8") as f:
+        content = f.read()
+    _, body = _parse_frontmatter(content)
+    return body
+
+
+# =============================================================================
 # TOOL IMPLEMENTATIONS
 # =============================================================================
 
 
 def wiki_read(article_path: str) -> str:
+    """Thin reader: returns raw article content. LLM decides relevance and
+    credibility (draft/ articles are unverified — visible via path)."""
     wiki_dir = os.path.realpath(CONFIG["wiki_dir"])
     full_path = os.path.realpath(f"{CONFIG['wiki_dir']}/{article_path}")
     if not full_path.startswith(wiki_dir):
-        return f"Error: '{article_path}' invalid path — access outside wiki directory blocked."
+        return f"Error [PATH_BLOCKED]: '{article_path}' — access outside wiki directory."
     if not os.path.exists(full_path):
-        return f"Error: '{article_path}' not found."
-    content = read_file(full_path)
-    if len(content) > CONFIG["wiki_truncate_at"] * 4:
-        content = content[:CONFIG["wiki_truncate_at"] * 4] + "\n\n... [truncated]"
-    if "draft/" in article_path:
-        return "[WARNING: UNVERIFIED SOURCE]\n\n" + content
-    return content
+        return f"Error [FILE_NOT_FOUND]: '{article_path}' not found in wiki."
+    return read_file(full_path)
 
 
-def mastersheet_read(query: str) -> str:
+def mastersheet_read(query: str, limit: int = 20) -> str:
+    """Thin reader: substring match + aggregation commands. No fuzzy logic.
+    LLM decides which row is relevant from raw data."""
     import csv
     q = query.lower().strip()
 
-    # Special commands: random pick, list all, count
+    # Aggregation commands (pure I/O — not LLM bypass)
     if q in ("rastgele", "random", "rastgele sec", "rastgele 10", "10 rastgele"):
         import random
-        all_rows = []
-        with open(CONFIG["mastersheet_file"], "r", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                if row.get("Company Name", "").strip():
-                    all_rows.append(row)
+        all_rows = [r for r in csv.DictReader(open(CONFIG["mastersheet_file"], encoding="utf-8"))
+                    if r.get("Company Name", "").strip()]
         sample = random.sample(all_rows, min(10, len(all_rows)))
-        header = f"(Random {len(sample)} firms / total {len(all_rows)})\n\n"
+        header = f"(Random {len(sample)} of {len(all_rows)} firms)\n\n"
         return header + "\n---\n".join(format_client_row(r) for r in sample)
 
     if q in ("tumu", "hepsi", "tum firmalar", "liste", "listele", "all"):
-        all_rows = []
-        with open(CONFIG["mastersheet_file"], "r", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                name = row.get("Company Name", "").strip()
-                if name:
-                    all_rows.append(name)
-        return f"Total {len(all_rows)} firms:\n\n" + "\n".join(f"- {n}" for n in all_rows[:50])
+        names = [r.get("Company Name", "").strip()
+                 for r in csv.DictReader(open(CONFIG["mastersheet_file"], encoding="utf-8"))
+                 if r.get("Company Name", "").strip()]
+        return f"Total {len(names)} firms:\n\n" + "\n".join(f"- {n}" for n in names)
 
     if q in ("say", "kac firma", "toplam", "count"):
         with open(CONFIG["mastersheet_file"], "r", encoding="utf-8") as f:
             count = sum(1 for row in csv.DictReader(f) if row.get("Company Name", "").strip())
         return f"Total {count} firms registered in the mastersheet."
 
+    # Substring match across company name, NIP, firm type, accountant role
     results = []
-    partial = []
     with open(CONFIG["mastersheet_file"], "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
+        for row in csv.DictReader(f):
             nip = safe_nip(row.get("NIP/PESEL", ""))
-            company = row.get("Company Name", "")
-            typ = row.get("TYP", "").strip()
-            ra = row.get("RA", "").strip()
-            cl = company.lower()
-            tl = typ.lower()
-            rl = ra.lower()
+            haystack = " ".join([
+                row.get("Company Name", "").lower(),
+                nip,
+                row.get("TYP", "").lower(),
+                row.get("RA", "").lower(),
+            ])
+            if q in haystack:
+                results.append(format_client_row(row))
 
-            # Exact match: company name, NIP, firm type, accountant
-            if q in cl or q == nip or q == tl or q in rl:
-                results.append(format_client_row(row))
-            # Firm type match: abbreviations like "jdg", "sp", "sc"
-            elif q in tl or tl.startswith(q):
-                results.append(format_client_row(row))
-            # Fuzzy: word-based matching (typo tolerance, min 3 chars in common)
-            elif not results:
-                q_words = [w for w in q.split() if len(w) >= 3]
-                c_words = [w for w in cl.split() if len(w) >= 3]
-                if q_words and c_words:
-                    match_count = sum(1 for w in q_words if any(
-                        w[:3] == cw[:3] and len(w) >= 3 for cw in c_words
-                    ))
-                    if match_count == len(q_words):
-                        partial.append(format_client_row(row))
-    if results:
-        header = f"({len(results)} results found)\n\n" if len(results) > 1 else ""
-        return header + "\n---\n".join(results[:10])
-    if partial:
-        return f"({len(partial)} partial matches)\n\n" + "\n---\n".join(partial[:5])
-    return f"No matching firm found for '{query}'."
+    if not results:
+        return f"No matching firm found for '{query}'."
+
+    header = f"({len(results)} results)\n\n" if len(results) > 1 else ""
+    if len(results) > limit:
+        header = f"({len(results)} results — showing first {limit}. Pass a higher 'limit' param to widen.)\n\n"
+    return header + "\n---\n".join(results[:limit])
 
 
 def wiki_write(filename: str, content: str) -> str:
@@ -577,7 +634,7 @@ def wiki_write(filename: str, content: str) -> str:
     wiki_dir = os.path.realpath(CONFIG["wiki_dir"])
     target = os.path.realpath(f"{CONFIG['wiki_dir']}/{filename}")
     if not target.startswith(wiki_dir):
-        return f"Error: '{filename}' invalid — access outside wiki directory blocked."
+        return f"Error [PATH_BLOCKED]: '{filename}' — access outside wiki directory."
     os.makedirs(os.path.dirname(target), exist_ok=True)
     is_update = os.path.exists(target)
 
@@ -937,11 +994,11 @@ def _create_xlsx(title, content, filename):
         reader = csv_mod.reader(io.StringIO(content))
         rows = list(reader)
         if len(rows) < 1:
-            return "Error: CSV data is empty."
+            return "Error [EMPTY_DATA]: CSV data is empty."
         headers = rows[0]
         data_rows = rows[1:]
     except Exception as e:
-        return f"Error: CSV parsing failed — {str(e)}"
+        return f"Error [PARSE_ERROR]: CSV parsing failed — {str(e)}"
 
     wb = Workbook()
     ws = wb.active
@@ -1000,7 +1057,7 @@ def exa_search(query: str) -> str:
 
     api_key = os.getenv("EXA_API_KEY", "")
     if not api_key:
-        return "Error: EXA_API_KEY environment variable is not set."
+        return "Error [CONFIG_MISSING]: EXA_API_KEY environment variable is not set."
 
     url = "https://api.exa.ai/search"
     payload = json.dumps({
@@ -1059,7 +1116,7 @@ def krs_lookup(krs_number: str) -> str:
     # Clean KRS number — digits only
     krs_clean = "".join(c for c in str(krs_number) if c.isdigit())
     if not krs_clean:
-        return f"Error: '{krs_number}' is not a valid KRS number."
+        return f"Error [INPUT_INVALID]: '{krs_number}' is not a valid 10-digit KRS number."
     krs_clean = krs_clean.zfill(10)  # Pad to 10 digits
 
     url = f"https://api-krs.ms.gov.pl/api/krs/OdpisPelny/{krs_clean}?rejestr=P&format=json"
@@ -1136,13 +1193,14 @@ def krs_lookup(krs_number: str) -> str:
 def execute_tool(name, args):
     tools = {
         "wiki_read": lambda a: wiki_read(a["article_path"]),
-        "mastersheet_read": lambda a: mastersheet_read(a["query"]),
+        "mastersheet_read": lambda a: mastersheet_read(a["query"], a.get("limit", 20)),
         "wiki_write": lambda a: wiki_write(a["filename"], a["content"]),
         "create_pdf": lambda a: _create_pdf(a["title"], a["content"], a["filename"], a.get("preview", False)),
         "create_docx": lambda a: _create_docx(a["title"], a["content"], a["filename"], a.get("preview", False)),
         "create_xlsx": lambda a: _create_xlsx(a["title"], a["content"], a["filename"]),
         "krs_lookup": lambda a: krs_lookup(a["krs_number"]),
         "exa_search": lambda a: exa_search(a["query"]),
+        "load_skill": lambda a: load_skill(a["name"]),
     }
     fn = tools.get(name)
     if fn:
@@ -1151,7 +1209,7 @@ def execute_tool(name, args):
         except Exception as e:
             import traceback
             traceback.print_exc()
-            return f"Error: {str(e)}"
+            return f"Error [UPSTREAM_ERROR]: {str(e)}"
 
     # MCP fallback — route to the server that owns this tool
     mcp_server = _mcp_tool_registry.get(name)
@@ -1160,7 +1218,7 @@ def execute_tool(name, args):
         if proc.poll() is None:
             return _call_mcp_tool(mcp_server, name, args)
 
-    return f"Error: '{name}' unrecognized tool."
+    return f"Error [TOOL_UNKNOWN]: '{name}' not in tool registry."
 
 
 # =============================================================================
@@ -1527,7 +1585,22 @@ def build_messages(session):
     max_index = CONFIG.get("max_index_chars", 4000)
     if len(index_content) > max_index:
         index_content = index_content[:max_index] + "\n\n... [INDEX truncated — use wiki_read('INDEX.md') for more articles]"
-    system = SYSTEM_PROMPT + f"\n\n[WIKI INDEX — Decide which article to read by looking at this list]\n{index_content}"
+
+    # Skills registry — progressive disclosure: name+description here, body loaded on demand
+    skills = list_skills()
+    skills_block = ""
+    if skills:
+        lines = [f"- {s['name']}: {s['description']}" for s in skills]
+        skills_block = (
+            "\n\n[SKILLS — Load a skill's full instructions with load_skill(name) when its description matches the task]\n"
+            + "\n".join(lines)
+        )
+
+    system = (
+        SYSTEM_PROMPT
+        + f"\n\n[WIKI INDEX — Decide which article to read by looking at this list]\n{index_content}"
+        + skills_block
+    )
     messages = [{"role": "system", "content": system}]
     messages.extend(session["messages"][-CONFIG["max_history_messages"]:])
 

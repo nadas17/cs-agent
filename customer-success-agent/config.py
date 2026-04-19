@@ -32,6 +32,9 @@ CONFIG = {
     "index_file": os.path.join(_BASE, "wiki", "INDEX.md"),
     "mastersheet_file": os.path.join(_BASE, "mastersheet", "clients.csv"),
 
+    # Skills (progressive disclosure: name+description in system prompt, body on demand)
+    "skills_dir": os.path.join(_BASE, "skills"),
+
     # External APIs
     "exa_api_key": os.getenv("EXA_API_KEY", ""),
 
