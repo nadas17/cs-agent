@@ -97,6 +97,30 @@ Write your responses in NATURAL LANGUAGE. Do NOT use markdown formatting:
 | Payment/invoice reminders | **Get approval from CS team first**, then forward to client |
 | Contract cancellation request | **Write a report to General Manager** + prepare a "We have received your request, we will get back to you shortly" message to the client + notify the CS team |
 
+### 2.4 Routing Examples (route DIRECTLY — do NOT ask "which client" first)
+
+**CRITICAL ROUTING RULE:** On routing questions, you MUST NOT ask "which client?", "which firm?", "which employee?", "which NIP?" as a clarifying question. These questions are about TOPIC → ROLE mapping, not about a specific record. Route on the VERY FIRST TURN based on the topic keywords. Identifying the specific client is the USER'S job after receiving the routing answer.
+
+Route on the first turn. Only ask a clarifying question if the topic itself is ambiguous (two domains at once), NEVER to identify which client.
+
+- User: "Bordro hesaplaması soruyor, kime yönlendirmeliyim?"
+  Answer: "Payroll Specialist'e yönlendir — maaş hesaplaması onun sorumluluğunda."
+
+- User: "Müşteri ZUS bildirimi hakkında soruyor."
+  Answer: "ZUS bildirimleri Payroll Specialist'in alanı — müşterinin sorusunu ona ileten bir mesaj hazırlayabilirim."
+
+- User: "Müşteri belge eksikliği bildiriyor."
+  Answer: "Document Specialist'e yönlendir — belge kontrolü ve arşivleme onun sorumluluğunda."
+
+- User: "Müşteri sözleşme iptal etmek istiyor."
+  Answer: "General Manager'a rapor yaz + müşteriye 'talebinizi aldık, kısa süre içinde döneceğiz' mesajı hazırla + CS ekibine bildir. Kendi başına fesih süreci başlatma."
+
+- User: "Müşteri vergi kesinti oranlarını soruyor."
+  Answer: "Vergi tavsiyesi verilmez — müşteriye profesyonel bir vergi danışmanına yönlendirilmesi gerektiğini ilet. Spesifik sorular için General Manager'a danış."
+
+- User: "Yeni müşteri geldi, nereden başlayalım?"
+  Answer: (calls load_skill('new_client_onboarding'), then provides the 7-step procedure — does NOT ask "which client" first)
+
 ---
 
 ## 3. SERVICE SCOPE
@@ -1779,6 +1803,20 @@ def _agent_loop_inner(user_message, session, messages, start):
         # T9: classify_tier now returns (tier, reason) tuple
         tier, tier_reason = classify_tier(query_type, tool_calls_log, routing_decision)
 
+        # T6.2: Routing decision reason — which source produced the routing
+        routing_decision_reason = None
+        if routing_decision:
+            called_tools = {tc["name"] for tc in tool_calls_log}
+            if "load_skill" in called_tools:
+                skill_name = next((tc["args"].get("name") for tc in tool_calls_log if tc["name"] == "load_skill"), "unknown")
+                routing_decision_reason = f"via_skill:{skill_name}"
+            elif "wiki_read" in called_tools:
+                routing_decision_reason = "via_wiki"
+            elif "mastersheet_read" in called_tools:
+                routing_decision_reason = "via_mastersheet"
+            else:
+                routing_decision_reason = "direct_system_prompt"
+
         # T9: Save tool usage summary as reasoning
         tool_reasoning = ", ".join(
             f"{tc['name']}({list(tc['args'].values())[0][:30] if tc['args'] else ''})"
@@ -1795,6 +1833,7 @@ def _agent_loop_inner(user_message, session, messages, start):
             "wiki_articles_used": wiki_articles_used,
             "tool_calls": tool_calls_log,
             "routing_decision": routing_decision,
+            "routing_decision_reason": routing_decision_reason,
             "self_check_result": self_check_result,
             "grounding_result": grounding,
             "error_category": None,
