@@ -1454,13 +1454,26 @@ def model_call(messages, tools=None):
         kwargs["tools"] = tools
     for attempt in range(3):
         try:
-            msg = client.chat.completions.create(**kwargs).choices[0].message
+            resp = client.chat.completions.create(**kwargs)
+            msg = resp.choices[0].message
             # Thinking mode fix: some models write to reasoning_content, leaving content empty
             if not msg.content and not msg.tool_calls:
                 reasoning = getattr(msg, 'reasoning_content', None)
                 if reasoning:
                     msg.content = reasoning
-            return msg
+            # Normalize to SimpleNamespace with usage telemetry
+            from types import SimpleNamespace
+            u = getattr(resp, "usage", None)
+            return SimpleNamespace(
+                content=msg.content,
+                tool_calls=msg.tool_calls,
+                usage=SimpleNamespace(
+                    prompt_tokens=getattr(u, "prompt_tokens", 0) or 0,
+                    completion_tokens=getattr(u, "completion_tokens", 0) or 0,
+                    cache_read_tokens=0,
+                    cache_write_tokens=0,
+                ),
+            )
         except Exception as e:
             if "429" in str(e) and attempt < 2:
                 time.sleep(15 * (attempt + 1))
@@ -1531,10 +1544,21 @@ def _anthropic_call(messages, tools=None):
             for t in tools
         ]
 
+    # Prompt caching: wrap system text in a cache block (ephemeral, 5-min TTL).
+    # Anthropic requires >= 1024 tokens for Sonnet; our system + wiki index + skills
+    # block easily exceeds this. Cache hits dramatically reduce cost on multi-turn.
+    system_param = [
+        {
+            "type": "text",
+            "text": system_text,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ] if system_text else []
+
     kwargs = {
         "model": CONFIG["model"],
         "messages": api_messages,
-        "system": system_text,
+        "system": system_param,
         "temperature": CONFIG["temperature"],
         "max_tokens": CONFIG["max_tokens"],
     }
@@ -1567,9 +1591,19 @@ def _anthropic_call(messages, tools=None):
                 ),
             ))
 
+    # Extract usage for telemetry (Anthropic has cache_read/cache_creation fields)
+    u = getattr(response, "usage", None)
+    usage = SimpleNamespace(
+        prompt_tokens=getattr(u, "input_tokens", 0) or 0,
+        completion_tokens=getattr(u, "output_tokens", 0) or 0,
+        cache_read_tokens=getattr(u, "cache_read_input_tokens", 0) or 0,
+        cache_write_tokens=getattr(u, "cache_creation_input_tokens", 0) or 0,
+    )
+
     return SimpleNamespace(
         content=" ".join(text_parts) if text_parts else None,
         tool_calls=tool_calls if tool_calls else None,
+        usage=usage,
     )
 
 
@@ -1673,9 +1707,15 @@ def _agent_loop_inner(user_message, session, messages, start):
     wiki_articles_used = []
     tool_call_count = 0
     turn_count = 0  # Number of model calls (turns), not tool calls
+    usage_totals = {"prompt_tokens": 0, "completion_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0}
 
     while turn_count < CONFIG["max_tool_calls_per_turn"]:
         response = model_call(messages, tools=TOOLS)
+        # Accumulate token usage across multi-turn tool calls
+        u = getattr(response, "usage", None)
+        if u is not None:
+            for k in usage_totals:
+                usage_totals[k] += getattr(u, k, 0) or 0
 
         if response.tool_calls:
             turn_count += 1  # One turn = one model call (regardless of tool count)
@@ -1759,7 +1799,13 @@ def _agent_loop_inner(user_message, session, messages, start):
             "grounding_result": grounding,
             "error_category": None,
             "duration_ms": int((time.time() - start) * 1000),
+            "prompt_tokens": usage_totals["prompt_tokens"],
+            "completion_tokens": usage_totals["completion_tokens"],
+            "cache_read_tokens": usage_totals["cache_read_tokens"],
+            "cache_write_tokens": usage_totals["cache_write_tokens"],
+            "total_tokens": sum(usage_totals.values()),
         }
+        session["_last_trace"] = trace_data  # Benchmark hooks can inspect per-query metadata
         save_trace(trace_data)
 
         # T10: Update client state (for clients queried from mastersheet)

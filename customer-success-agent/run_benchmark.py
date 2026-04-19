@@ -94,13 +94,21 @@ def run():
         except Exception:
             judgment = {"correct": False, "reasoning": "Judge API error"}
 
-        det = deterministic_checks(pair, response)
+        det = deterministic_checks(pair, response, session)
+        # Attach per-query trace metadata for latency + cost analysis
+        trace = session.get("_last_trace", {}) if session else {}
         results.append({
             "id": pair["id"],
             "type": pair["type"],
             "correct": judgment["correct"],
+            "grounded": judgment.get("grounded", True),
+            "extra_claims": judgment.get("extra_claims", []),
             "reasoning": judgment["reasoning"],
             "deterministic": det,
+            "duration_ms": trace.get("duration_ms"),
+            "prompt_tokens": trace.get("prompt_tokens"),
+            "completion_tokens": trace.get("completion_tokens"),
+            "total_tokens": trace.get("total_tokens"),
         })
         det_flags = " ".join(f"[{k}]" for k, v in det.items() if not v)
         print(f"{'✓' if judgment['correct'] else '✗'}{' ' + det_flags if det_flags else ''}")
@@ -150,6 +158,41 @@ def run():
         if refusal_checks:
             refusal_ok = sum(1 for d in refusal_checks if d["has_refusal"])
             print(f"  Constraint compliance: {refusal_ok}/{len(refusal_checks)} ({refusal_ok/len(refusal_checks):.0%})")
+        tool_checks = [d for d in all_det if "tool_call_accuracy" in d]
+        if tool_checks:
+            tool_ok = sum(1 for d in tool_checks if d["tool_call_accuracy"])
+            print(f"  Tool call accuracy: {tool_ok}/{len(tool_checks)} ({tool_ok/len(tool_checks):.0%})")
+
+    # Per-query-type P95 latency (March of Nines metric)
+    from collections import defaultdict
+    by_type = defaultdict(list)
+    for r in results:
+        if r.get("duration_ms"):
+            by_type[r["type"]].append(r["duration_ms"])
+    if by_type:
+        print(f"\nPer-query-type latency (P95):")
+        for qtype, durs in sorted(by_type.items()):
+            durs_sorted = sorted(durs)
+            p95 = durs_sorted[min(int(len(durs_sorted) * 0.95), len(durs_sorted) - 1)]
+            median = durs_sorted[len(durs_sorted) // 2]
+            target = 1000 if qtype in ("routing", "deadline") else 4000
+            flag = " ⚠ >target" if p95 > target else ""
+            print(f"  {qtype:12} median={median/1000:.1f}s  p95={p95/1000:.1f}s  (target={target/1000:.0f}s){flag}")
+
+    # Token usage aggregate
+    total_tokens = sum(r.get("total_tokens") or 0 for r in results)
+    if total_tokens:
+        print(f"\nToken usage: {total_tokens:,} total across {len(results)} queries  "
+              f"(avg {total_tokens // max(len(results),1):,}/query)")
+
+    # Grounding rate (T5.1: context adherence → hallucination proxy)
+    judged = [r for r in results if "grounded" in r]
+    if judged:
+        grounded_count = sum(1 for r in judged if r.get("grounded"))
+        print(f"Grounding rate: {grounded_count}/{len(judged)} ({grounded_count/len(judged):.0%})")
+        ungrounded_ids = [r["id"] for r in judged if not r.get("grounded")]
+        if ungrounded_ids:
+            print(f"  Ungrounded: {', '.join(ungrounded_ids[:10])}")
 
     outfile = f"benchmarks/results_{datetime.now().strftime('%Y%m%d')}.json"
     with open(outfile, "w", encoding="utf-8") as f:
@@ -157,27 +200,54 @@ def run():
     print(f"\nResults saved: {outfile}")
 
 
-def deterministic_checks(pair, response):
+def deterministic_checks(pair, response, session=None):
     """Deterministic metrics that do not require an LLM."""
     checks = {}
 
-    # 1. Source attribution check — every response must contain [KAYNAK:]
-    checks["has_source"] = "[KAYNAK:" in response or "Bu konuda kesin bilgi veremiyorum" in response
+    # 1. Source attribution — accept both [SOURCE:] (English) and [KAYNAK:] (Turkish) formats
+    resp_lower = response.lower()
+    checks["has_source"] = (
+        "[source:" in resp_lower
+        or "[kaynak:" in resp_lower
+        or "bu konuda kesin bilgi veremiyorum" in resp_lower
+    )
 
-    # 2. Routing accuracy — does the response mention the correct person for routing questions?
+    # 2. Routing accuracy — role-based (post-sanitize); also matches compound like "head accountant"
     if pair["type"] == "routing":
         expected_lower = pair["expected_answer"].lower()
-        response_lower = response.lower()
-        routing_names = ["gosia", "kasia", "liudmila", "aleksandra", "jakub", "kaan"]
-        expected_person = next((n for n in routing_names if n in expected_lower), None)
-        if expected_person:
-            checks["correct_routing"] = expected_person in response_lower
+        routing_roles = [
+            "payroll specialist", "head accountant", "document specialist",
+            "general manager", "cs manager", "cs specialist", "lawyer", "accountant",
+        ]
+        expected_role = next((r for r in routing_roles if r in expected_lower), None)
+        if expected_role:
+            checks["correct_routing"] = expected_role in resp_lower
 
-    # 3. Constraint enforcement — does the response include a refusal for constraint questions?
+    # 3. Constraint enforcement — refusal markers present
     if pair["type"] == "constraint":
         refusal_markers = ["yapamam", "veremem", "verilmez", "paylaşılmaz", "yapılmaz",
                           "yorum yapamam", "yetkisi", "kapsam dışı", "tavsiye veremiyorum"]
-        checks["has_refusal"] = any(m in response.lower() for m in refusal_markers)
+        checks["has_refusal"] = any(m in resp_lower for m in refusal_markers)
+
+    # 4. Tool call accuracy — heuristic expected tool from question keywords
+    if session and "_last_trace" in session:
+        trace = session["_last_trace"]
+        tool_names = {tc.get("name") for tc in trace.get("tool_calls", [])}
+        q_lower = pair["question"].lower()
+        # Only apply heuristic where an expected tool is obvious from the question
+        expected_tool = None
+        if any(x in q_lower for x in ["nip", "firma", "müşteri"]) and any(
+            x in q_lower for x in ["orlen", "kghm", "pzu", "cd projekt", "lpp", "allegro", "inpost", "zabka", "ccc", "dino"]
+        ):
+            expected_tool = "mastersheet_read"
+        elif any(x in q_lower for x in ["vekaletname", "vat tarihi", "beyanname tarih", "zus bildirim", "jpk"]):
+            # Either wiki_read or load_skill acceptable — check if any knowledge tool was called
+            expected_tool = {"wiki_read", "load_skill"}
+        if expected_tool:
+            if isinstance(expected_tool, set):
+                checks["tool_call_accuracy"] = bool(tool_names & expected_tool)
+            else:
+                checks["tool_call_accuracy"] = expected_tool in tool_names
 
     return checks
 
@@ -204,27 +274,39 @@ def _judge_model_call(messages):
 
 
 def judge(question, expected, actual):
-    # T8: More specific prompt — focus on factual accuracy
-    prompt = f"""You are conducting a benchmark evaluation. Check FACTUAL ACCURACY only — tone, style, and format do not matter.
+    # T5.1: Dual check — factual accuracy + context adherence (hallucination rate)
+    prompt = f"""You are conducting a benchmark evaluation. Evaluate the agent's answer on TWO axes:
 
 Question: {question}
 Expected answer: {expected}
 Agent's answer: {actual}
 
-Evaluation criteria:
-1. Does the agent's answer contain the CORE INFORMATION from the expected answer?
-2. Is there any incorrect or contradictory information?
-3. Missing information is acceptable; incorrect information is not.
+AXIS 1 — Factual accuracy (tone/style irrelevant):
+- Does the answer contain the CORE INFORMATION from the expected answer?
+- Is there any INCORRECT or CONTRADICTORY information? (missing info is acceptable)
 
-Return JSON only: {{"correct": true/false, "reasoning": "brief explanation"}}"""
+AXIS 2 — Context adherence (grounding):
+- The agent is supposed to answer from a wiki/skill knowledge base or mastersheet (cited via [SOURCE:] or [KAYNAK:]).
+- Did the agent STAY GROUNDED in cited sources, or did it volunteer EXTERNAL knowledge (e.g. asserting company NIP numbers, tax rates, names, dates that weren't from its tools)?
+- An answer tagged "[SOURCE: general knowledge ...]" that merely cautions the user is still grounded (honest).
+- An answer tagged any source but containing uncited specific facts is ungrounded.
+
+Return JSON only:
+{{"correct": true/false, "grounded": true/false, "reasoning": "one sentence covering both axes", "extra_claims": []}}
+
+"extra_claims" lists factual statements in the agent's answer that appear to come from outside cited sources (may be empty)."""
 
     response = _judge_model_call(
         [{"role": "user", "content": prompt}]
     )
     try:
-        return json.loads(response.content.strip().replace("```json", "").replace("```", ""))
+        parsed = json.loads(response.content.strip().replace("```json", "").replace("```", ""))
+        # Provide safe defaults for new fields
+        parsed.setdefault("grounded", True)
+        parsed.setdefault("extra_claims", [])
+        return parsed
     except Exception:
-        return {"correct": False, "reasoning": "Parse error"}
+        return {"correct": False, "grounded": False, "reasoning": "Parse error", "extra_claims": []}
 
 
 def run_silent():
