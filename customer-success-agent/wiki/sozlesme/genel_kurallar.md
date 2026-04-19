@@ -19,7 +19,7 @@ Firmanin hizmet sozlesmesinin genel cercevesi, odeme kosullari, fesih kurallari,
 
 ### Fesih Kuralları
 - Standart fesih: 90 gün ihbar süresi, ay sonunda etkili.
-- Müşteri fesih isterse → müşteriye standart yanıt + Kaan Bey'e rapor + ekibe bildir. Kendi başına fesih süreci başlatma.
+- Müşteri fesih isterse → müşteriye standart yanıt + General Manager'e rapor + ekibe bildir. Kendi başına fesih süreci başlatma.
 
 ### Hizmet Askıya Alma Koşulları
 - 14+ gün ödeme gecikmesi

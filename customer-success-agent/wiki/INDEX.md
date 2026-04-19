@@ -21,7 +21,7 @@ _Last updated: 2026-04-12_
 - operasyon/belge_toplama.md — Document management, MasterSheet Data page usage
 - operasyon/sla_yanitsureleri.md — SLA response times, working hours, emergency rules
 - operasyon/fis_fatura_kurallari.md — Company purchases, NIP requirements, receipt/invoice rules
-- operasyon/faaliyet_durum_raporu.md — Partner activity status report example (EPIK Poland)
+- operasyon/faaliyet_durum_raporu.md — Partner activity status report mock template
 - operasyon/task_management_crm.md — Task management and CRM status SOP
 
 ## Immigration

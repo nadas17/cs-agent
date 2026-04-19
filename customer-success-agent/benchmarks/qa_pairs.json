@@ -37,42 +37,42 @@
   {
     "id": "routing-001",
     "question": "Müşteri bordro hesaplaması soruyor, kime yönlendirmeliyim?",
-    "expected_answer": "Gosia'ya yönlendir.",
+    "expected_answer": "Payroll Specialist'ya yönlendir.",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-002",
     "question": "Müşteri şirket kuruluşu hakkında soruyor",
-    "expected_answer": "Jakub'a yönlendir.",
+    "expected_answer": "Lawyer'a yönlendir.",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-003",
     "question": "Müşteri sözleşme iptal etmek istiyor",
-    "expected_answer": "Kaan Bey'e rapor yaz, müşteriye standart yanıt ver, ekibe bildir. Fesih süreci başlatma.",
+    "expected_answer": "General Manager'e rapor yaz, müşteriye standart yanıt ver, ekibe bildir. Fesih süreci başlatma.",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-004",
     "question": "Müşteri JPK dosyalama hakkında soru soruyor, kime yönlendirmeliyim?",
-    "expected_answer": "Firmaya atanan muhasebeciye (Kasia veya Liudmila) yönlendir.",
+    "expected_answer": "Firmaya atanan muhasebeciye (Head Accountant veya Accountant) yönlendir.",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-005",
     "question": "Müşteri belge eksikliği bildiriyor",
-    "expected_answer": "Aleksandra'ya yönlendir.",
+    "expected_answer": "Document Specialist'ya yönlendir.",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-006",
     "question": "Müşteri ZUS bildirimi hakkında soruyor",
-    "expected_answer": "Gosia'ya yönlendir.",
+    "expected_answer": "Payroll Specialist'ya yönlendir.",
     "type": "routing",
     "difficulty": "medium"
   },
@@ -86,21 +86,21 @@
   {
     "id": "routing-008",
     "question": "Müşteri A1 belgesi hakkında bilgi istiyor",
-    "expected_answer": "Gosia'ya yönlendir (A1 süreçleri Gosia'nın sorumluluğunda).",
+    "expected_answer": "Payroll Specialist'ya yönlendir (A1 süreçleri Payroll Specialist'nın sorumluluğunda).",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-009",
     "question": "Müşteri isim/sahiplik değişikliği yapmak istiyor",
-    "expected_answer": "Jakub'a yönlendir.",
+    "expected_answer": "Lawyer'a yönlendir.",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-010",
-    "question": "Karol'a bir hukuki konu yönlendirmem gerekiyor mu?",
-    "expected_answer": "Hayır, Karol artık aktif değil. Hukuki konular Jakub'a yönlendirilmeli.",
+    "question": "Former Lawyer'a bir hukuki konu yönlendirmem gerekiyor mu?",
+    "expected_answer": "Hayır, Former Lawyer artık aktif değil. Hukuki konular Lawyer'a yönlendirilmeli.",
     "type": "routing",
     "difficulty": "medium"
   },
@@ -163,14 +163,14 @@
   {
     "id": "customer-001",
     "question": "PKN Orlen firmasinin bilgilerini goster",
-    "expected_answer": "NIP: 7740001454, KRS: 0000028860, muhasebeci: Katarzyna",
+    "expected_answer": "NIP: 7740001454, KRS: 0000028860, muhasebeci: Head Accountant",
     "type": "customer",
     "difficulty": "medium"
   },
   {
     "id": "customer-002",
     "question": "KGHM Polska Miedz firmasinin muhasebecisi kim?",
-    "expected_answer": "Liudmila.",
+    "expected_answer": "Accountant.",
     "type": "customer",
     "difficulty": "medium"
   },
@@ -226,7 +226,7 @@
   {
     "id": "constraint-006",
     "question": "Bu müşterinin hizmetini askıya al",
-    "expected_answer": "Hizmet askıya alma yetkisi sadece Kaan Bey'dedir. Kendi başına bu işlemi başlatamaz.",
+    "expected_answer": "Hizmet askıya alma yetkisi sadece General Manager'dedir. Kendi başına bu işlemi başlatamaz.",
     "type": "constraint",
     "difficulty": "medium"
   },
@@ -365,15 +365,15 @@
   },
   {
     "id": "partner-001",
-    "question": "Smyrna partneri kaç firma yönetiyor?",
-    "expected_answer": "Yaklaşık 12 firma. Sorumlu kişi Koray Binler.",
+    "question": "Partner A partneri kaç firma yönetiyor?",
+    "expected_answer": "Yaklaşık 12 firma. Sorumlu kişi Partner A Contact.",
     "type": "procedure",
     "difficulty": "medium"
   },
   {
     "id": "partner-002",
-    "question": "G&L partneri kaç firma ile çalışıyor?",
-    "expected_answer": "Yaklaşık 54 firma. Sorumlu kişi Gediz.",
+    "question": "Partner C partneri kaç firma ile çalışıyor?",
+    "expected_answer": "Yaklaşık 54 firma. Sorumlu kişi Partner C Contact.",
     "type": "procedure",
     "difficulty": "medium"
   },
@@ -506,7 +506,7 @@
   {
     "id": "edge-006",
     "question": "Firmanin sahibi kim? Ne is yapar?",
-    "expected_answer": "Kaan Cakar genel mudur ve mali musavir. Stratejik kararlar ve musteri eskalasyonlarindan sorumlu.",
+    "expected_answer": "General Manager genel mudur ve mali musavir. Stratejik kararlar ve musteri eskalasyonlarindan sorumlu.",
     "type": "procedure",
     "difficulty": "easy"
   },
@@ -527,7 +527,7 @@
   {
     "id": "edge-009",
     "question": "Hem bordro hem muhasebe konusunda sorum var. Kime danismaliyim?",
-    "expected_answer": "Bordro icin Gosia, muhasebe icin Kasia/Liudmila yonlendirilir.",
+    "expected_answer": "Bordro icin Payroll Specialist, muhasebe icin Head Accountant/Accountant yonlendirilir.",
     "type": "routing",
     "difficulty": "hard"
   },
@@ -611,21 +611,21 @@
   {
     "id": "routing-ext-001",
     "question": "Musterinin sirketini dondurmak (zawieszenie) istiyor.",
-    "expected_answer": "Jakub'a yonlendir (sirket dondurma islemleri).",
+    "expected_answer": "Lawyer'a yonlendir (sirket dondurma islemleri).",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-ext-002",
     "question": "Musteri fatura kesemiyor, ne yapmaliyim?",
-    "expected_answer": "Muhasebe ekibine (Kasia/Liudmila) yonlendir.",
+    "expected_answer": "Muhasebe ekibine (Head Accountant/Accountant) yonlendir.",
     "type": "routing",
     "difficulty": "medium"
   },
   {
     "id": "routing-ext-003",
     "question": "Musteri hizmet bedelini sorguluyor.",
-    "expected_answer": "Fiyat bilgisi paylasilamaz, yonetim (Kaan Bey) iletisime gececektir.",
+    "expected_answer": "Fiyat bilgisi paylasilamaz, yonetim (General Manager) iletisime gececektir.",
     "type": "routing",
     "difficulty": "medium"
   },
@@ -638,8 +638,8 @@
   },
   {
     "id": "customer-ext-002",
-    "question": "Smyrna firmasina ait musterileri listele.",
-    "expected_answer": "Smyrna partner firma, sorumlusu Yusuf Bey, yaklasik 30 musteri.",
+    "question": "Partner A firmasina ait musterileri listele.",
+    "expected_answer": "Partner A partner firma, sorumlusu Partner A Contact, yaklasik 30 musteri.",
     "type": "customer",
     "difficulty": "medium"
   },

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CS Agent** -- Self-hosted customer success agent for a Poland-based accounting firm. Qwen 3.6 Plus via OpenRouter API. Compact system prompt (behavioral rules) + wiki articles (domain knowledge).
+**CS Agent** -- Self-hosted customer success agent for a Poland-based accounting firm. Claude Sonnet 4.6 via Anthropic API (OpenRouter fallback available). Compact system prompt (behavioral rules) + wiki articles (domain knowledge).
 
 **Language:** Turkish (code comments, wiki, user-facing text). English for accounting/legal team communication.
 
@@ -43,7 +43,7 @@ Single-file harness (`agent.py`) with OpenAI-compatible function calling:
 ```
 User query → classify_query (intent) → classify_tier (1/2/3)
            → build_messages(system_prompt + wiki_index + history)
-           → model_call (Qwen 3.6 via OpenRouter)
+           → model_call (Claude Sonnet 4.6 via Anthropic API)
            → tool calls loop (max 10 per turn)
            → grounding_check → final response + trace log
 ```
@@ -181,9 +181,9 @@ cs-agent/
 import os
 
 CONFIG = {
-    "api_base": "https://openrouter.ai/api/v1",
-    "api_key": os.getenv("OPENROUTER_API_KEY"),
-    "model": "qwen/qwen3.6-plus-preview:free",
+    "api_base": "https://openrouter.ai/api/v1",  # Fallback; Anthropic auto-detected via sk-ant- key
+    "api_key": os.getenv("ANTHROPIC_API_KEY") or os.getenv("OPENROUTER_API_KEY"),
+    "model": "claude-sonnet-4-6",
     "temperature": 0.2,
     "max_tokens": 4096,
 
@@ -475,12 +475,12 @@ if __name__ == "__main__":
 |---|-------|----------|
 | 1 | "ZUS beyanı nasıl yapılır?" | wiki_read → procedure + [KAYNAK:] |
 | 2 | "PKN Orlen NIP?" | mastersheet_read → "7740001454" |
-| 3 | "Bordro hesaplaması hakkında bilgi lazım" | Route to Gosia |
+| 3 | "Bordro hesaplaması hakkında bilgi lazım" | Route to Payroll Specialist |
 | 4 | "Yeni müşteri onboarding checklist" | wiki_read → checklist |
 | 5 | "Kasım VAT beyanname tarihi?" | wiki_read → "Her ayın 25'i" |
 | 6 | "Müşteriye hatırlatma mesajı yaz" | Draft message → ask approval |
 | 7 | "Wiki'de olmayan bir konu" | [KAYNAK: genel bilgi] or "bilgi yok" |
-| 8 | "Sözleşme iptal talebi" | Route to Kaan Bey + standard response |
+| 8 | "Sözleşme iptal talebi" | Route to General Manager + standard response |
 | 9 | "Vergi tavsiyesi ver" | Refuse |
 | 10 | "Varolmayan makale oku" | Handle error |
 
@@ -556,9 +556,9 @@ docker-compose exec agent python run_benchmark.py
 
 | Topic | Route to |
 |-------|----------|
-| Bordro (payroll) | Gosia |
-| Muhasebe (accounting) | Kasia / Liudmila |
-| Hukuk (legal) / şirket kuruluşu | Jakub |
-| Strateji / sözleşme iptal | Kaan Bey |
+| Bordro (payroll) | Payroll Specialist |
+| Muhasebe (accounting) | Head Accountant / Accountant |
+| Hukuk (legal) / şirket kuruluşu | Lawyer |
+| Strateji / sözleşme iptal | General Manager |
 | Vergi tavsiyesi | REFUSE — redirect to professional advisor |
 | Fiyat bilgisi | REFUSE — management will contact |

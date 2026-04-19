@@ -18,7 +18,7 @@ Aylık bordro (lista płac) süreci ay sonundan başlayarak ZUS beyanname gönde
 | Ay sonu + 10 gün | Bordro raporları teslim |
 
 ### Bordro Sorumlusu
-Tüm bordro işlemleri **Gosia** (Bordro Uzmanı / Payroll Specialist) tarafından yürütülür. Bordro ile ilgili sorular Gosia'ya yönlendirilmelidir.
+Tüm bordro işlemleri **Payroll Specialist** (Bordro Uzmanı / Payroll Specialist) tarafından yürütülür. Bordro ile ilgili sorular Payroll Specialist'ya yönlendirilmelidir.
 
 ## İlişkili Makaleler
 - [[onboarding/checklist.md]]

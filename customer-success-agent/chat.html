@@ -5,34 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS Agent</title>
     <style>
-        /* ═══ DESIGN TOKENS — glassmorphism monochrome ═══ */
+        /* ═══ DESIGN TOKENS — shadcn/ui dark theme ═══ */
         :root {
-            --background: hsl(0 0% 4%);
-            --foreground: hsl(0 0% 93%);
-            --card: hsl(0 0% 100% / 0.04);
-            --card-foreground: hsl(0 0% 93%);
-            --popover: hsl(0 0% 100% / 0.06);
-            --muted: hsl(0 0% 100% / 0.07);
-            --muted-foreground: hsl(0 0% 55%);
-            --primary: hsl(0 0% 100%);
-            --primary-foreground: hsl(0 0% 4%);
-            --secondary: hsl(0 0% 100% / 0.08);
-            --secondary-foreground: hsl(0 0% 85%);
-            --border: hsl(0 0% 100% / 0.08);
-            --input: hsl(0 0% 100% / 0.05);
-            --ring: hsl(0 0% 100% / 0.3);
-            --destructive: hsl(0 72% 55%);
-            --success: hsl(142 60% 45%);
-            --warning: hsl(38 80% 55%);
-            --pdf: hsl(0 65% 48%);
-            --docx: hsl(217 60% 48%);
-            --xlsx: hsl(142 55% 38%);
+            --background: hsl(240 6% 6%);
+            --foreground: hsl(0 0% 95%);
+            --card: hsl(240 5% 10%);
+            --card-foreground: hsl(0 0% 95%);
+            --popover: hsl(240 5% 12%);
+            --muted: hsl(240 4% 16%);
+            --muted-foreground: hsl(240 4% 55%);
+            --primary: hsl(25 95% 53%);
+            --primary-foreground: hsl(0 0% 100%);
+            --secondary: hsl(240 4% 16%);
+            --secondary-foreground: hsl(0 0% 90%);
+            --border: hsl(240 4% 18%);
+            --input: hsl(240 4% 14%);
+            --ring: hsl(25 95% 53%);
+            --destructive: hsl(0 84% 60%);
+            --success: hsl(142 76% 36%);
+            --warning: hsl(38 92% 50%);
+            --pdf: hsl(0 72% 51%);
+            --docx: hsl(217 71% 45%);
+            --xlsx: hsl(142 64% 36%);
             --radius: 0.75rem;
             --radius-sm: 0.5rem;
             --radius-lg: 1rem;
             --sidebar-width: 280px;
-            --glass: hsl(0 0% 100% / 0.03);
-            --glass-border: hsl(0 0% 100% / 0.06);
         }
 
         /* ═══ RESET & BASE ═══ */
@@ -52,10 +50,8 @@
         /* ═══ LAYOUT ═══ */
         #sidebar {
             width: var(--sidebar-width);
-            background: var(--glass);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-right: 1px solid var(--glass-border);
+            background: var(--background);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
@@ -73,13 +69,11 @@
 
         .sidebar-logo {
             width: 36px; height: 36px;
-            background: hsl(0 0% 100% / 0.1);
-            backdrop-filter: blur(12px);
-            border: 1px solid hsl(0 0% 100% / 0.12);
+            background: var(--primary);
             border-radius: 10px;
             display: grid; place-items: center;
             font-weight: 800; font-size: 13px;
-            color: var(--foreground);
+            color: var(--primary-foreground);
             letter-spacing: -0.5px;
             flex-shrink: 0;
         }
@@ -121,7 +115,7 @@
             color: var(--foreground);
             margin-bottom: 4px;
         }
-        .sidebar-btn.new-chat:hover { border-color: hsl(0 0% 100% / 0.3); color: var(--foreground); }
+        .sidebar-btn.new-chat:hover { border-color: var(--primary); color: var(--primary); }
 
         .sidebar-btn svg { flex-shrink: 0; opacity: 0.6; }
         .sidebar-btn:hover svg { opacity: 1; }
@@ -161,10 +155,8 @@
         /* ═══ HEADER ═══ */
         header {
             height: 52px;
-            background: var(--glass);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-bottom: 1px solid var(--glass-border);
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             padding: 0 20px;
@@ -219,8 +211,8 @@
         }
 
         @keyframes glow-pulse {
-            0%, 100% { box-shadow: 0 0 4px hsl(0 0% 100% / 0.3); }
-            50% { box-shadow: 0 0 10px hsl(0 0% 100% / 0.5); }
+            0%, 100% { box-shadow: 0 0 4px hsl(142 76% 36% / 0.5); }
+            50% { box-shadow: 0 0 10px hsl(142 76% 36% / 0.8); }
         }
 
         /* ═══ CHAT AREA ═══ */
@@ -255,14 +247,12 @@
 
         .welcome-icon {
             width: 64px; height: 64px;
-            background: hsl(0 0% 100% / 0.08);
-            backdrop-filter: blur(16px);
-            border: 1px solid hsl(0 0% 100% / 0.1);
+            background: var(--primary);
             border-radius: 16px;
             display: grid; place-items: center;
             margin-bottom: 20px;
         }
-        .welcome-icon svg { color: var(--foreground); }
+        .welcome-icon svg { color: var(--primary-foreground); }
 
         .welcome h2 {
             color: var(--foreground);
@@ -296,8 +286,8 @@
             font-family: inherit;
         }
         .suggestion:hover {
-            border-color: hsl(0 0% 100% / 0.2);
-            background: hsl(0 0% 100% / 0.06);
+            border-color: var(--primary);
+            background: hsl(25 95% 53% / 0.06);
         }
 
         /* ═══ MESSAGE WRAPPER ═══ */
@@ -327,19 +317,17 @@
         }
 
         .bubble.user {
-            background: hsl(0 0% 100% / 0.12);
-            color: var(--foreground);
-            border: 1px solid hsl(0 0% 100% / 0.1);
+            background: var(--primary);
+            color: var(--primary-foreground);
             border-radius: 16px 16px 4px 16px;
-            backdrop-filter: blur(12px);
+            box-shadow: 0 2px 8px hsl(25 95% 53% / 0.2);
         }
 
         .bubble.assistant {
-            background: hsl(0 0% 100% / 0.04);
+            background: var(--card);
             color: var(--card-foreground);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--border);
             border-radius: 16px 16px 16px 4px;
-            backdrop-filter: blur(8px);
         }
 
         .bubble code {
@@ -464,9 +452,9 @@
         /* Source Chip */
         .source-chip {
             display: inline-flex; align-items: center; gap: 5px;
-            background: hsl(0 0% 100% / 0.04);
-            border: 1px solid var(--glass-border);
-            border-left: 2px solid hsl(0 0% 100% / 0.3);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 2px solid var(--primary);
             border-radius: var(--radius-sm);
             padding: 4px 10px;
             font-size: 11px;
@@ -474,7 +462,7 @@
             font-weight: 500;
             animation: fade-in 0.3s ease;
         }
-        .source-chip svg { color: var(--foreground); opacity: 0.5; }
+        .source-chip svg { color: var(--primary); opacity: 0.7; }
 
         /* Warning Strip */
         .warn-strip {
@@ -515,7 +503,7 @@
         .think-dot {
             width: 6px; height: 6px;
             border-radius: 50%;
-            background: var(--foreground);
+            background: var(--primary);
             animation: bounce-dot 0.6s ease infinite;
         }
         .think-dot:nth-child(2) { animation-delay: 0.15s; }
@@ -530,10 +518,8 @@
 
         /* ═══ INPUT AREA ═══ */
         #input-area {
-            background: var(--glass);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-top: 1px solid var(--glass-border);
+            background: var(--card);
+            border-top: 1px solid var(--border);
             padding: 14px 20px;
             display: flex; gap: 10px; align-items: flex-end;
             flex-shrink: 0;
@@ -554,8 +540,8 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         #msg-input:focus {
-            border-color: hsl(0 0% 100% / 0.2);
-            box-shadow: 0 0 0 3px hsl(0 0% 100% / 0.06);
+            border-color: var(--ring);
+            box-shadow: 0 0 0 3px hsl(25 95% 53% / 0.12);
         }
         #msg-input::placeholder { color: var(--muted-foreground); }
 
@@ -633,7 +619,7 @@
 <!-- ═══ SIDEBAR ═══ -->
 <aside id="sidebar">
     <div class="sidebar-brand">
-        <div class="sidebar-logo">CS</div>
+        <div class="sidebar-logo">TX</div>
         <div>
             <div class="sidebar-brand-text">CS Agent</div>
             <div class="sidebar-brand-sub">CS Agent</div>
@@ -730,13 +716,13 @@ const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('sidebar-overlay');
 
 const ROUTING = {
-    'gosia': { name: 'Gosia', role: 'Payroll / ZUS', initial: 'G' },
-    'kasia': { name: 'Kasia', role: 'Accounting', initial: 'K' },
-    'katarzyna': { name: 'Kasia', role: 'Accounting', initial: 'K' },
-    'liudmila': { name: 'Liudmila', role: 'Accounting', initial: 'L' },
-    'aleksandra': { name: 'Aleksandra', role: 'Documents', initial: 'A' },
-    'jakub': { name: 'Jakub', role: 'Legal', initial: 'J' },
-    'kaan': { name: 'Kaan Bey', role: 'Management', initial: 'K' },
+    'gosia': { name: 'Payroll Specialist', role: 'Payroll / ZUS', initial: 'G' },
+    'kasia': { name: 'Head Accountant', role: 'Accounting', initial: 'K' },
+    'katarzyna': { name: 'Head Accountant', role: 'Accounting', initial: 'K' },
+    'liudmila': { name: 'Accountant', role: 'Accounting', initial: 'L' },
+    'aleksandra': { name: 'Document Specialist', role: 'Documents', initial: 'A' },
+    'jakub': { name: 'Lawyer', role: 'Legal', initial: 'J' },
+    'kaan': { name: 'General Manager', role: 'Management', initial: 'K' },
 };
 
 const REFUSAL_WORDS = ['yapamam', 'veremem', 'verilmez', 'kapsam dışı', 'tavsiye veremiyorum', 'yorum yapamam', 'paylaşılmaz'];

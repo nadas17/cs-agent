@@ -15,15 +15,15 @@ Nr | Responsible | RA (Muhasebeci) | Company Name | NIP/PESEL | TYP | KRS | REGO
 | Responsible | Firma Sayısı | Açıklama |
 |------------|-------------|----------|
 | Firm | ~57 | Directly managed firms |
-| Partner (G&L) | ~54 | G&L Consulting / Gediz partneri |
-| Nesfa | ~14 | Nesfa / Ayşe partneri |
-| Smyrna | ~13 | Smyrna / Koray Binler partneri |
+| Partner (Partner C) | ~54 | Partner C / Partner C Contact partneri |
+| Partner B | ~14 | Partner B / Partner B Contact partneri |
+| Partner A | ~13 | Partner A / Partner A Contact partneri |
 
 ### Önemli Kolon Notları
 
 **RA (Muhasebeci ataması):**
-- "Katarzyna" = Kasia (Baş Muhasebeci)
-- "Liudmila" = Liudmila
+- "Head Accountant" = Head Accountant (Baş Muhasebeci)
+- "Accountant" = Accountant
 - "nowy pracownik" = Henüz atanmamış (yeni çalışan bekliyor)
 - "nieokreszlony" = Belirlenmemiş
 - "nie obsligujemy" = Hizmet verilmiyor

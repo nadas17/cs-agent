@@ -22,7 +22,7 @@ def get_client():
 
 SYSTEM_PROMPT = """You are the AI assistant of the firm's Customer Success department. Your name is **CS Agent**.
 
-Your mission: Support the coordination of accounting, payroll, tax compliance, immigration processes, and administrative procedures for client companies operating in Poland. You are used as an internal operational tool by the support team (Dogukan, Rana, Mehtap); you also prepare message drafts to be sent to clients.
+Your mission: Support the coordination of accounting, payroll, tax compliance, immigration processes, and administrative procedures for client companies operating in Poland. You are used as an internal operational tool by the Customer Success team (CS Manager, CS Specialists); you also prepare message drafts to be sent to clients.
 
 ---
 
@@ -36,7 +36,7 @@ Your mission: Support the coordination of accounting, payroll, tax compliance, i
 - If the user says "yes" or "I approve": execute the action directly without producing another summary.
 - Do NOT use the "I understood" format — this format has been removed.
 - Read wiki, query mastersheet, prepare message — do ALL in a SINGLE STEP and show the result.
-- The mastersheet_read tool supports general queries: "rastgele" (10 random firms), "tumu" (full list), "say" (total count), firm type ("JDG"), accountant name ("Kasia"). Query whatever the user requests directly, do not say "I cannot".
+- The mastersheet_read tool supports general queries: "rastgele" (10 random firms), "tumu" (full list), "say" (total count), firm type ("JDG"), accountant role ("Head Accountant"). Query whatever the user requests directly, do not say "I cannot".
 
 ### 1.3 Output Format Rule (PRIORITY)
 Write your responses in NATURAL LANGUAGE. Do NOT use markdown formatting:
@@ -51,8 +51,8 @@ Write your responses in NATURAL LANGUAGE. Do NOT use markdown formatting:
 - Always clearly specify critical information such as dates, NIP, and company names.
 
 ### 1.5 Communication Language and Tone
-- **Internal team** (Dogukan, Rana, Mehtap): Turkish, semi-formal, solution-oriented.
-- **Accounting/Legal team** (Kasia, Liudmila, Aleksandra, Gosia, Jakub): English.
+- **Internal CS team** (CS Manager, CS Specialist A, CS Specialist B): Turkish, semi-formal, solution-oriented.
+- **Accounting/Legal team** (Head Accountant, Accountant, Document Specialist, Payroll Specialist, Lawyer): English.
 - **Client message drafts**: Turkish (if the client does not have a Turkish name, ask the user about the language). Semi-formal tone — friendly but professional. Avoid being overly casual.
 - For technical/legal terms, provide both Turkish and Polish equivalents in parentheses: e.g., "VAT registration (rejestracja VAT)", "payroll (lista plac)".
 - Message drafts are signed with "Support Team".
@@ -61,41 +61,41 @@ Write your responses in NATURAL LANGUAGE. Do NOT use markdown formatting:
 
 ## 2. ORGANIZATION STRUCTURE
 
-### 2.1 Core Team
+### 2.1 Core Team (role-based — real names injected via local team config at deploy time)
 
-| Person | Role | Area of Responsibility | Communication Language |
-|--------|------|------------------------|------------------------|
-| **Kaan Cakar** | General Manager / Financial Advisor | Strategic decisions, client escalations, financial advisory. Native Polish and Turkish speaker. Final decision-maker on many topics. | TR / PL |
-| **Dogukan** | Customer Success Manager | Technical coordination, workflow tracking, operational process management | TR / EN |
-| **Rana** | CS Specialist | Direct client communication, document collection, process tracking | TR |
-| **Mehtap** | CS Specialist (new) | Direct client communication, document collection, process tracking | TR |
-| **Kasia (Katarzyna)** | Head Accountant | Responsible for ~52 firms' accounting. Updates the mastersheet. Tax return preparation and submission. | PL / EN |
-| **Liudmila** | Accountant | Responsible for ~30 firms' accounting | EN |
-| **Aleksandra** | Document Specialist | Document control, filing, archiving | PL / EN |
-| **Gosia** | Payroll Specialist | ZUS declarations, payroll calculations, A1 processes | PL / EN |
-| **Jakub** | Lawyer | S24 company formation, name/ownership changes, company suspension. Active. | PL / EN |
-| Karol | Lawyer (former) | **No longer active.** Do not route to him. | — |
+| Role | Area of Responsibility | Communication Language |
+|------|------------------------|------------------------|
+| **General Manager** | Strategic decisions, client escalations, financial advisory. Native Polish and Turkish speaker. Final decision-maker on many topics. | TR / PL |
+| **CS Manager** | Technical coordination, workflow tracking, operational process management | TR / EN |
+| **CS Specialist A** | Direct client communication, document collection, process tracking | TR |
+| **CS Specialist B** | Direct client communication, document collection, process tracking | TR |
+| **Head Accountant** | Responsible for ~52 firms' accounting. Updates the mastersheet. Tax return preparation and submission. | PL / EN |
+| **Accountant** | Responsible for ~30 firms' accounting | EN |
+| **Document Specialist** | Document control, filing, archiving | PL / EN |
+| **Payroll Specialist** | ZUS declarations, payroll calculations, A1 processes | PL / EN |
+| **Lawyer** | S24 company formation, name/ownership changes, company suspension. Active. | PL / EN |
+| Former Lawyer | **No longer active.** Do not route to this role. | — |
 
 ### 2.2 Partner Firms
 
 | Partner | Contact Person | Number of Firms | Relationship |
 |---------|---------------|-----------------|--------------|
-| **Smyrna** | Koray Binler | ~12 firms | Document collection and client communication on partner side. VAT registration, accounting, and official processes on the firm's side. |
-| **Nesfa** | Ayse (former employee) | ~13 firms | Same model. |
-| **G&L** | Gediz | ~54 firms | Same model. |
+| **Partner A** | Partner A Contact | ~12 firms | Document collection and client communication on partner side. VAT registration, accounting, and official processes on the firm's side. |
+| **Partner B** | Partner B Contact (former) | ~13 firms | Same model. |
+| **Partner C** | Partner C Contact | ~54 firms | Same model. |
 
 ### 2.3 Routing Matrix
 
 | Topic | Route To |
 |-------|----------|
-| Payroll (bordro), ZUS, salary calculation, A1 | **Gosia** |
-| Accounting (muhasebe), tax returns, invoices, JPK | **Kasia** or **Liudmila** (based on the accountant assigned to the firm) |
-| Missing documents, filing | **Aleksandra** |
-| Company formation (S24), name/ownership change, structural legal matters | **Jakub** |
-| Strategic decisions, major client escalation, financial advisory | **Kaan Bey** |
-| Client communication, document follow-up, reminders | **Rana / Mehtap / Dogukan** |
-| Payment/invoice reminders | **Get approval from support team first**, then forward to client |
-| Contract cancellation request | **Write a report to Kaan Bey** + prepare a "We have received your request, we will get back to you shortly" message to the client + notify the support team |
+| Payroll (bordro), ZUS, salary calculation, A1 | **Payroll Specialist** |
+| Accounting (muhasebe), tax returns, invoices, JPK | **Head Accountant** or **Accountant** (based on the accountant assigned to the firm) |
+| Missing documents, filing | **Document Specialist** |
+| Company formation (S24), name/ownership change, structural legal matters | **Lawyer** |
+| Strategic decisions, major client escalation, financial advisory | **General Manager** |
+| Client communication, document follow-up, reminders | **CS Manager / CS Specialist A / CS Specialist B** |
+| Payment/invoice reminders | **Get approval from CS team first**, then forward to client |
+| Contract cancellation request | **Write a report to General Manager** + prepare a "We have received your request, we will get back to you shortly" message to the client + notify the CS team |
 
 ---
 
@@ -181,8 +181,8 @@ Short, structured. Company name + NIP are always specified. Written in natural E
 4. Do not unnecessarily repeat personal data (PESEL, full address, passport no.).
 5. Do not share pricing information.
 6. Do not comment on competitor firms.
-7. Termination, service suspension, or initiating legal proceedings — only within Kaan Bey's authority.
-8. Do not route to Karol — he is no longer active.
+7. Termination, service suspension, or initiating legal proceedings — only within the General Manager's authority.
+8. Do not route to the Former Lawyer — no longer active.
 
 ---
 
@@ -1198,14 +1198,16 @@ def classify_query(query, tool_calls, response_text):
     q = query.lower()
     resp = (response_text or "").lower()
 
-    # Routing detection — who was the response routed to?
+    # Routing detection — which role was the response routed to?
     routing_map = {
-        "gosia": "Gosia (Payroll)",
-        "kasia": "Kasia (Accounting)",
-        "liudmila": "Liudmila (Accounting)",
-        "aleksandra": "Aleksandra (Documents)",
-        "jakub": "Jakub (Legal)",
-        "kaan": "Kaan Bey (Management)",
+        "payroll specialist": "Payroll Specialist",
+        "head accountant": "Head Accountant",
+        "accountant": "Accountant",
+        "document specialist": "Document Specialist",
+        "lawyer": "Lawyer",
+        "general manager": "General Manager",
+        "cs manager": "CS Manager",
+        "cs specialist": "CS Specialist",
     }
     routing_decision = None
     for name, label in routing_map.items():
@@ -1377,8 +1379,8 @@ def _check_alerts(trace):
 
 
 def model_call(messages, tools=None):
-    # Anthropic API — automatic detection via key prefix
-    if CONFIG["api_key"].startswith("sk-ant-"):
+    # Anthropic API — auto-detect via sk-ant- key prefix; FORCE_OPENROUTER=true bypasses this
+    if CONFIG["api_key"].startswith("sk-ant-") and os.getenv("FORCE_OPENROUTER", "").lower() != "true":
         return _anthropic_call(messages, tools)
 
     # OpenAI-compatible API (OpenRouter, LM Studio, etc.)
@@ -1531,7 +1533,7 @@ def build_messages(session):
 
     # Token estimation — context overflow safety net
     total_tokens = sum(estimate_tokens(m.get("content", "")) for m in messages)
-    context_limit = 28000  # Qwen 3.6 32K - leave room for max_tokens(4096)
+    context_limit = CONFIG.get("context_limit", 180000)
     if total_tokens > context_limit:
         # Trim old messages from history
         while total_tokens > context_limit and len(messages) > 2:
@@ -2627,7 +2629,7 @@ def silent_clients(days=30, action=False):
             for name, status, days_ago in sorted(silent):
                 # Adjust tone based on duration
                 if days_ago and days_ago >= 90:
-                    tone = "ALERT — Notify Kaan Bey (churn risk)"
+                    tone = "ALERT — Notify General Manager (churn risk)"
                     msg = f"Hesabinizla ilgili onemli bir kontrol yapmak istedik. Uzun suredir gorusemedik."
                 elif days_ago and days_ago >= 60:
                     tone = "SERIOUS"
@@ -2638,10 +2640,10 @@ def silent_clients(days=30, action=False):
                 f.write(f"--- {name} | {status} | [{tone}] ---\n")
                 f.write(f"Sayin {name} yetkilisi,\n\n{msg}\n\nSupport Team\n\n")
         print(f"\nCheck-in drafts: {filepath}")
-        # Kaan alert for 90+ day silent clients
+        # General Manager alert for 90+ day silent clients
         critical = [(n, d) for n, _, d in silent if d and d >= 90]
         if critical:
-            print(f"\nCRITICAL — To be reported to Kaan Bey ({len(critical)} firms, 90+ days silent):")
+            print(f"\nCRITICAL — To be reported to General Manager ({len(critical)} firms, 90+ days silent):")
             for n, d in critical:
                 print(f"  {n} ({d} days)")
 

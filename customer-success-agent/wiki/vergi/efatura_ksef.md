@@ -21,7 +21,7 @@ Bu rehber, Customer Success ekibinin Polonya'da faaliyet gosteren musteri firmal
 
 **Adım 3:** **"NIP firmy"** yazan bölüme firma NIP numarası girilir. Ardından mavi ile belirtilen **"Uwierzytelnij"** kısmına tıklayarak giriş yapıyoruz.
 
-**Adım 4:** Ardından ilk seçenek **"Aplikacja mObywatel"** [Profil Zaufany ile giriliyor]{.comment-start id="0" author="Kaan Cakar" date="2026-04-02T10:17:11Z"}seçilir[]{.comment-end id="0"}.
+**Adım 4:** Ardından ilk seçenek **"Aplikacja mObywatel"** [Profil Zaufany ile giriliyor]{.comment-start id="0" author="General Manager" date="2026-04-02T10:17:11Z"}seçilir[]{.comment-end id="0"}.
 
 ![](./media/image3.png){width="3.6505096237970256in" height="1.5003926071741032in"}
 
@@ -37,15 +37,15 @@ Bu rehber, Customer Success ekibinin Polonya'da faaliyet gosteren musteri firmal
 
 **Adım 6:** Faktury sekmesi görünmeyeceği için ilk olarak **"Uprawnienia"** kısmından **"Dodaj administratora"** sekmesine tıklanır. Açılan ekranda "**Dane jednostki lub podmiotu"** kısmında ilk seçenek **"Podmiot kontekstu biezącego"** seçilir. Ardından aşağıda mavi ile işaretli seçenekler seçilir.
 
-**Kaan Çakar adına giriş yetkisi vermek için;**
+**General Manager adına giriş yetkisi vermek için;**
 
-Müşteriler **Wpisz PESEL** kısmına Kaan Çakar PESEL (XXXXXXXXXXX) numarasını gireceklerdir.
+Müşteriler **Wpisz PESEL** kısmına General Manager PESEL (XXXXXXXXXXX) numarasını gireceklerdir.
 
-**Wpisz PESEL → Kaan Çakar PESEL numarası yazılacak** [XXXXXXXXXXX]{.comment-start id="1" author="Kaan Cakar" date="2026-04-02T10:17:41Z"}XXXXXXXXXXX[]{.comment-end id="1"}
+**Wpisz PESEL → General Manager PESEL numarası yazılacak** [XXXXXXXXXXX]{.comment-start id="1" author="General Manager" date="2026-04-02T10:17:41Z"}XXXXXXXXXXX[]{.comment-end id="1"}
 
-**Wpisz imię → Kaan**
+**Wpisz imię → General Manager**
 
-**Wpisz nazwisko → Çakar**[Türkçe karakter olmasina dikkat]{.comment-start id="2" author="Kaan Cakar" date="2026-04-02T10:17:51Z"}
+**Wpisz nazwisko → Çakar**[Türkçe karakter olmasina dikkat]{.comment-start id="2" author="General Manager" date="2026-04-02T10:17:51Z"}
 
 []{.comment-end id="2"}Son olarak en alttaki mavi onay kısmına tıklıyoruz ve bu sayfadaki işlemleri tamamlamış oluyoruz.
 
@@ -63,7 +63,7 @@ Bu işlemin ardından **"Zakres uprawnień"** başlığı altındaki tüm kutucu
 
 **Adım 8:** Yine aynı sekme içerisinde bu sefer **"Osobie fizycznej do pracy w KSeF"** seçeneği seçilir. Yine görselde belirtildiği gibi mavi ile belirtilen kutucuklar işaretlenir.
 
-Yeniden PESEL' i [KENDI peselleri ve bigileri]{.comment-start id="3" author="Kaan Cakar" date="2026-04-02T10:18:52Z"}[bunu video da size yetki vermeleri için ayrı kendi peselleri için de ayrı anlatmıştınız sizin adınıza işlem yok mu bu bölümde hiç]{.comment-start id="4" author="Mehtap A." date="2026-04-02T11:42:08Z"}[Doğrudur, ama sonradan farkettim ki, zaten bizim içeriye admin girişimiz varsa kendi kendimize zaten yetki verebiliriz, bu sebepten dolayı burada kendilerine yetki vermeleri yeterli olacaktır.]{.comment-start id="5" author="Kaan Cakar" date="2026-04-05T20:59:49Z"}seçip Kaan Çakar [[[]{.comment-end id="5"}]{.comment-end id="4"}]{.comment-end id="3"}PESEL numarası, adı ve soyadı belirtilen kutucuklara yazılır.
+Yeniden PESEL' i [KENDI peselleri ve bigileri]{.comment-start id="3" author="General Manager" date="2026-04-02T10:18:52Z"}[bunu video da size yetki vermeleri için ayrı kendi peselleri için de ayrı anlatmıştınız sizin adınıza işlem yok mu bu bölümde hiç]{.comment-start id="4" author="CS Specialist B" date="2026-04-02T11:42:08Z"}[Doğrudur, ama sonradan farkettim ki, zaten bizim içeriye admin girişimiz varsa kendi kendimize zaten yetki verebiliriz, bu sebepten dolayı burada kendilerine yetki vermeleri yeterli olacaktır.]{.comment-start id="5" author="General Manager" date="2026-04-05T20:59:49Z"}seçip General Manager [[[]{.comment-end id="5"}]{.comment-end id="4"}]{.comment-end id="3"}PESEL numarası, adı ve soyadı belirtilen kutucuklara yazılır.
 
 **"Zakres Uprawnień"** kısmındaki tüm kutucukları onay vermek için işaretlenir ve**"Nadaj uprawnienia"** kısmından onay verilir.
 
@@ -76,7 +76,7 @@ Yeniden PESEL' i [KENDI peselleri ve bigileri]{.comment-start id="3" author="Kaa
 |                                                                                                                                                                                                                                                     |
 | **[Adım 8' de yer alan işlemler müşterinin kendi PESEL numarası için de yapılır ve onay verilir. Ardından sistemden çıkış yapılıp tekrar girildiğinde Adım 6' da bahsettiğimiz ve görünmeyen Faktury sekmesini görüyor olacaklardır.]{.underline}** |
 |                                                                                                                                                                                                                                                     |
-| **[Unutulmamalıdır! Bu işlem hem kendi adınıza hem de giriş vermek için Kaan Çakar adına yapılmalıdır.]{.underline}**                                                                                                                               |
+| **[Unutulmamalıdır! Bu işlem hem kendi adınıza hem de giriş vermek için General Manager adına yapılmalıdır.]{.underline}**                                                                                                                               |
 +-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 **Adım 9: Faktury** 

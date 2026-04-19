@@ -17,11 +17,15 @@ if os.path.exists(_env_file):
 
 CONFIG = {
     # LLM API
+    # Primary: Anthropic direct (auto-detected via sk-ant- key prefix in model_call).
+    # Fallback: OpenRouter (used if key prefix != sk-ant-).
     "api_base": os.getenv("API_BASE", "https://openrouter.ai/api/v1"),
     "api_key": os.getenv("ANTHROPIC_API_KEY") or os.getenv("OPENROUTER_API_KEY", ""),
-    "model": os.getenv("MODEL", "claude-sonnet-4-6-20250217"),
+    "model": os.getenv("MODEL", "claude-sonnet-4-6"),
     "temperature": 0.2,
     "max_tokens": 4096,
+    # Context budget — Sonnet 4.6 has 200K context; leave headroom for max_tokens.
+    "context_limit": int(os.getenv("CONTEXT_LIMIT", "180000")),
 
     # Wiki knowledge base
     "wiki_dir": os.path.join(_BASE, "wiki"),
